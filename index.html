@@ -39,11 +39,6 @@
             background-clip: text;
         }
 
-        .subtitle {
-            margin-top: 10px;
-            color: #888;
-        }
-
         .panel {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 20px;
@@ -51,7 +46,6 @@
             margin: 20px 0;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .controls {
@@ -78,19 +72,16 @@
         .btn-primary {
             background: linear-gradient(135deg, #00d9ff, #00a8cc);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
         }
 
         .btn-success {
             background: linear-gradient(135deg, #00ff88, #00cc6a);
             color: #000;
-            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
         }
 
         .btn-danger {
             background: linear-gradient(135deg, #ff4757, #ff3838);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
         }
 
         .btn-secondary {
@@ -101,7 +92,6 @@
 
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
         }
 
         .btn:disabled {
@@ -121,7 +111,6 @@
             background: rgba(0, 0, 0, 0.3);
             padding: 20px;
             border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .setting-group label {
@@ -130,7 +119,6 @@
             color: #aaa;
             font-size: 13px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .setting-group select {
@@ -141,7 +129,6 @@
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             font-size: 14px;
-            cursor: pointer;
         }
 
         .setting-group select option {
@@ -153,13 +140,11 @@
             align-items: center;
             gap: 12px;
             margin-top: 12px;
-            cursor: pointer;
         }
 
-        .checkbox-wrapper input[type="checkbox"] {
+        .checkbox-wrapper input {
             width: 22px;
             height: 22px;
-            cursor: pointer;
             accent-color: #00d9ff;
         }
 
@@ -187,7 +172,6 @@
             overflow: hidden;
             aspect-ratio: 16/9;
             max-height: 70vh;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         #remoteVideo, #localVideo {
@@ -203,26 +187,9 @@
             color: #888;
         }
 
-        .status.connected {
-            color: #00ff88;
-        }
-
-        .status.error {
-            color: #ff4757;
-        }
-
-        .status.warning {
-            color: #ffa502;
-        }
-
-        .viewers-count {
-            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 255, 136, 0.2));
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: inline-block;
-            margin: 15px 0;
-            font-weight: 600;
-        }
+        .status.connected { color: #00ff88; }
+        .status.error { color: #ff4757; }
+        .status.warning { color: #ffa502; }
 
         .room-id-display {
             background: rgba(0, 0, 0, 0.4);
@@ -231,10 +198,19 @@
             display: inline-block;
             margin: 10px 0;
             font-family: monospace;
-            font-size: 24px;
-            letter-spacing: 3px;
+            font-size: 28px;
+            letter-spacing: 4px;
             color: #00d9ff;
             border: 2px dashed rgba(0, 217, 255, 0.3);
+            user-select: all;
+        }
+
+        .viewers-count {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 255, 136, 0.2));
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 15px 0;
         }
 
         .join-panel {
@@ -244,7 +220,6 @@
 
         .join-panel h2 {
             margin-bottom: 30px;
-            font-size: 1.8em;
         }
 
         .join-panel input {
@@ -257,14 +232,14 @@
             width: 280px;
             text-align: center;
             margin-bottom: 20px;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             font-family: monospace;
         }
 
         .join-panel input::placeholder {
             letter-spacing: 2px;
-            text-transform: none;
+            font-size: 16px;
         }
 
         .tabs {
@@ -281,23 +256,18 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 16px;
         }
 
         .tab.active {
             background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 255, 136, 0.1));
             border-color: #00d9ff;
-            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
         }
 
         .tab:hover {
             background: rgba(0, 217, 255, 0.1);
-            transform: translateY(-2px);
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         .fullscreen-btn {
             position: absolute;
@@ -311,11 +281,6 @@
             cursor: pointer;
             z-index: 10;
             font-size: 18px;
-            transition: all 0.3s;
-        }
-
-        .fullscreen-btn:hover {
-            background: rgba(0, 217, 255, 0.3);
         }
 
         .stats-box {
@@ -328,26 +293,21 @@
             font-size: 12px;
             font-family: monospace;
             z-index: 10;
-            min-width: 150px;
         }
 
-        .stats-box div {
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .stats-box div { margin: 5px 0; }
 
         .quality-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             display: inline-block;
+            margin-right: 8px;
         }
 
-        .quality-good { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-        .quality-medium { background: #ffa502; box-shadow: 0 0 10px #ffa502; }
-        .quality-bad { background: #ff4757; box-shadow: 0 0 10px #ff4757; }
+        .quality-good { background: #00ff88; }
+        .quality-medium { background: #ffa502; }
+        .quality-bad { background: #ff4757; }
 
         .loader {
             border: 4px solid rgba(255,255,255,0.1);
@@ -359,18 +319,16 @@
             margin: 30px auto;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .volume-control {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-top: 15px;
-            padding: 10px;
+            padding: 15px;
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
+            border-radius: 10px;
         }
 
         .volume-control input[type="range"] {
@@ -379,7 +337,6 @@
             -webkit-appearance: none;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
-            cursor: pointer;
         }
 
         .volume-control input[type="range"]::-webkit-slider-thumb {
@@ -388,51 +345,48 @@
             height: 18px;
             background: #00d9ff;
             border-radius: 50%;
-            cursor: pointer;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .connection-status.online {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            display: block;
+        }
+
+        .connection-status.offline {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            display: block;
         }
 
         @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.8em;
-            }
-
-            .settings {
-                grid-template-columns: 1fr;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .join-panel input {
-                width: 100%;
-                font-size: 20px;
-            }
-
-            .tabs {
-                flex-direction: column;
-            }
-
-            .tab {
-                text-align: center;
-            }
-
-            .room-id-display {
-                font-size: 18px;
-            }
+            .settings { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .join-panel input { width: 100%; font-size: 20px; }
+            .tabs { flex-direction: column; }
+            .room-id-display { font-size: 20px; letter-spacing: 3px; }
         }
     </style>
 </head>
 <body>
+    <div class="connection-status" id="connectionStatus"></div>
+
     <div class="container">
         <header>
             <h1>📺 Screen Share</h1>
-            <p class="subtitle">Демонстрация экрана через интернет</p>
+            <p style="margin-top: 10px; color: #888;">Демонстрация экрана через интернет</p>
         </header>
 
         <div class="tabs">
@@ -443,32 +397,28 @@
         <div id="hostPanel" class="panel">
             <div class="settings">
                 <div class="setting-group">
-                    <label>Качество видео</label>
+                    <label>Качество</label>
                     <select id="qualitySelect">
-                        <option value="1080">1080p (Full HD)</option>
-                        <option value="720" selected>720p (HD)</option>
-                        <option value="480">480p (SD)</option>
-                        <option value="360">360p (Экономия)</option>
+                        <option value="1080">1080p Full HD</option>
+                        <option value="720" selected>720p HD</option>
+                        <option value="480">480p SD</option>
+                        <option value="360">360p Экономия</option>
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label>Частота кадров</label>
+                    <label>FPS</label>
                     <select id="fpsSelect">
                         <option value="60">60 FPS</option>
                         <option value="30" selected>30 FPS</option>
                         <option value="15">15 FPS</option>
-                        <option value="5">5 FPS (минимум)</option>
+                        <option value="5">5 FPS</option>
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label>Параметры</label>
+                    <label>Опции</label>
                     <div class="checkbox-wrapper">
                         <input type="checkbox" id="audioCheck">
-                        <span>Передавать звук системы</span>
-                    </div>
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="optimizeCheck" checked>
-                        <span>Оптимизация для текста</span>
+                        <span>Звук системы</span>
                     </div>
                 </div>
             </div>
@@ -479,7 +429,7 @@
             </div>
 
             <div id="streamInfo" class="hidden" style="text-align: center;">
-                <p style="margin-bottom: 10px; color: #888;">ID комнаты:</p>
+                <p style="margin-bottom: 10px; color: #888;">Код комнаты:</p>
                 <div class="room-id-display" id="roomIdDisplay"></div>
                 <div class="link-box">
                     <input type="text" id="shareLink" readonly>
@@ -488,7 +438,7 @@
                 <div class="viewers-count" id="viewersCount">👥 Зрителей: 0</div>
             </div>
 
-            <div class="status" id="hostStatus">Выберите настройки и нажмите "Начать трансляцию"</div>
+            <div class="status" id="hostStatus">Нажмите "Начать трансляцию"</div>
 
             <div class="video-container hidden" id="previewContainer">
                 <div class="stats-box" id="hostStats"></div>
@@ -499,8 +449,8 @@
 
         <div id="viewerPanel" class="panel hidden">
             <div class="join-panel" id="joinForm">
-                <h2>🔗 Присоединиться к трансляции</h2>
-                <p style="color: #888; margin-bottom: 25px;">Введите код комнаты от ведущего</p>
+                <h2>🔗 Присоединиться</h2>
+                <p style="color: #888; margin-bottom: 25px;">Введите код комнаты</p>
                 <input type="text" id="roomIdInput" placeholder="XXXXXX" maxlength="6">
                 <br>
                 <button class="btn btn-primary" id="joinBtn">Подключиться</button>
@@ -528,14 +478,14 @@
 
     <script>
         const firebaseConfig = {
-          apiKey: "AIzaSyAQNel_4CBPzKhIhjwxjKMbtwAT8UFNi10",
-          authDomain: "dsfads-2919e.firebaseapp.com",
-          databaseURL: "https://dsfads-2919e-default-rtdb.firebaseio.com",
-          projectId: "dsfads-2919e",
-          storageBucket: "dsfads-2919e.firebasestorage.app",
-          messagingSenderId: "17812864018",
-          appId: "1:17812864018:web:90d467c59ec37965fceccb",
-          measurementId: "G-J3HQJQB5HE"
+            apiKey: "AIzaSyAQNel_4CBPzKhIhjwxjKMbtwAT8UFNi10",
+            authDomain: "dsfads-2919e.firebaseapp.com",
+            databaseURL: "https://dsfads-2919e-default-rtdb.firebaseio.com",
+            projectId: "dsfads-2919e",
+            storageBucket: "dsfads-2919e.firebasestorage.app",
+            messagingSenderId: "17812864018",
+            appId: "1:17812864018:web:90d467c59ec37965fceccb",
+            measurementId: "G-J3HQJQB5HE"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -546,7 +496,8 @@
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
                 { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun.stunprotocol.org:3478' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
                 {
                     urls: 'turn:openrelay.metered.ca:80',
                     username: 'openrelayproject',
@@ -573,7 +524,6 @@
         let isHost = false;
         let statsInterval = null;
         let roomRef = null;
-        let listeners = [];
 
         function generateId(length) {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -583,6 +533,18 @@
             }
             return result;
         }
+
+        db.ref('.info/connected').on('value', (snap) => {
+            const statusEl = document.getElementById('connectionStatus');
+            if (snap.val() === true) {
+                statusEl.className = 'connection-status online';
+                statusEl.textContent = '🟢 Подключено к серверу';
+                setTimeout(() => statusEl.style.display = 'none', 2000);
+            } else {
+                statusEl.className = 'connection-status offline';
+                statusEl.textContent = '🔴 Нет соединения';
+            }
+        });
 
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -631,61 +593,56 @@
                 const fps = parseInt(document.getElementById('fpsSelect').value);
                 const withAudio = document.getElementById('audioCheck').checked;
 
-                const constraints = {
+                localStream = await navigator.mediaDevices.getDisplayMedia({
                     video: {
-                        width: { ideal: quality * 16 / 9, max: 1920 },
-                        height: { ideal: quality, max: 1080 },
-                        frameRate: { ideal: fps, max: 60 }
+                        width: { ideal: Math.round(quality * 16 / 9) },
+                        height: { ideal: quality },
+                        frameRate: { ideal: fps }
                     },
                     audio: withAudio
-                };
-
-                localStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+                });
 
                 document.getElementById('localVideo').srcObject = localStream;
                 document.getElementById('previewContainer').classList.remove('hidden');
 
                 roomId = generateId(6);
-                myPeerId = generateId(10);
+                myPeerId = generateId(12);
                 isHost = true;
 
                 roomRef = db.ref('rooms/' + roomId);
+
                 await roomRef.set({
                     host: myPeerId,
-                    created: Date.now(),
+                    created: firebase.database.ServerValue.TIMESTAMP,
                     active: true
                 });
 
                 roomRef.onDisconnect().remove();
 
-                const viewersRef = roomRef.child('viewers');
-                const viewerListener = viewersRef.on('child_added', async (snapshot) => {
-                    const viewerId = snapshot.key;
-                    const viewerData = snapshot.val();
-                    await createOfferForViewer(viewerId);
+                roomRef.child('viewers').on('child_added', async (snap) => {
+                    const viewerId = snap.key;
+                    if (viewerId !== myPeerId) {
+                        await createOfferForViewer(viewerId);
+                    }
                 });
-                listeners.push({ ref: viewersRef, event: 'child_added', callback: viewerListener });
 
-                const viewerRemoveListener = viewersRef.on('child_removed', (snapshot) => {
-                    const viewerId = snapshot.key;
+                roomRef.child('viewers').on('child_removed', (snap) => {
+                    const viewerId = snap.key;
                     if (peerConnections[viewerId]) {
                         peerConnections[viewerId].close();
                         delete peerConnections[viewerId];
                         updateViewersCount();
                     }
                 });
-                listeners.push({ ref: viewersRef, event: 'child_removed', callback: viewerRemoveListener });
 
-                const answersRef = roomRef.child('answers');
-                const answerListener = answersRef.on('child_added', async (snapshot) => {
-                    const viewerId = snapshot.key;
-                    const answer = snapshot.val();
+                roomRef.child('answers').on('child_added', async (snap) => {
+                    const viewerId = snap.key;
+                    const answer = snap.val();
                     const pc = peerConnections[viewerId];
                     if (pc && pc.signalingState !== 'stable') {
                         await pc.setRemoteDescription(new RTCSessionDescription(answer));
                     }
                 });
-                listeners.push({ ref: answersRef, event: 'child_added', callback: answerListener });
 
                 const shareUrl = window.location.origin + window.location.pathname + '?room=' + roomId;
                 document.getElementById('shareLink').value = shareUrl;
@@ -703,7 +660,7 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('hostStatus').textContent = '❌ ' + (err.message || 'Ошибка запуска');
+                document.getElementById('hostStatus').textContent = '❌ ' + (err.message || 'Ошибка');
                 document.getElementById('hostStatus').className = 'status error';
                 document.getElementById('startBtn').disabled = false;
             }
@@ -717,31 +674,24 @@
                 pc.addTrack(track, localStream);
             });
 
-            const candidatesRef = roomRef.child('hostCandidates/' + viewerId);
-
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
-                    candidatesRef.push(e.candidate.toJSON());
+                    roomRef.child('hostCandidates/' + viewerId).push(e.candidate.toJSON());
                 }
             };
 
             pc.onconnectionstatechange = () => {
-                if (pc.connectionState === 'connected') {
+                updateViewersCount();
+                if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                    pc.close();
+                    delete peerConnections[viewerId];
                     updateViewersCount();
-                } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                    if (peerConnections[viewerId]) {
-                        peerConnections[viewerId].close();
-                        delete peerConnections[viewerId];
-                        updateViewersCount();
-                    }
                 }
             };
 
-            const viewerCandidatesRef = roomRef.child('viewerCandidates/' + viewerId);
-            viewerCandidatesRef.on('child_added', async (snapshot) => {
-                const candidate = snapshot.val();
+            roomRef.child('viewerCandidates/' + viewerId).on('child_added', async (snap) => {
                 try {
-                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
                 } catch (e) {}
             });
 
@@ -757,11 +707,10 @@
         }
 
         function updateViewersCount() {
-            const count = Object.keys(peerConnections).filter(id => {
-                const pc = peerConnections[id];
-                return pc && (pc.connectionState === 'connected' || pc.connectionState === 'connecting');
-            }).length;
-            document.getElementById('viewersCount').textContent = '👥 Зрителей: ' + count;
+            const connected = Object.values(peerConnections).filter(pc => 
+                pc.connectionState === 'connected' || pc.connectionState === 'connecting'
+            ).length;
+            document.getElementById('viewersCount').textContent = '👥 Зрителей: ' + connected;
         }
 
         async function stopStreaming() {
@@ -773,10 +722,8 @@
             Object.values(peerConnections).forEach(pc => pc.close());
             peerConnections = {};
 
-            listeners.forEach(l => l.ref.off(l.event, l.callback));
-            listeners = [];
-
             if (roomRef) {
+                roomRef.off();
                 await roomRef.remove();
                 roomRef = null;
             }
@@ -813,46 +760,54 @@
                 document.getElementById('viewerStatus').innerHTML = '<div class="loader"></div>';
 
                 roomId = inputId;
-                myPeerId = generateId(10);
+                myPeerId = generateId(12);
 
                 roomRef = db.ref('rooms/' + roomId);
 
-                const roomSnapshot = await roomRef.once('value');
-                if (!roomSnapshot.exists() || !roomSnapshot.val().active) {
-                    throw new Error('Комната не найдена или неактивна');
+                const roomSnap = await roomRef.once('value');
+                if (!roomSnap.exists() || !roomSnap.val().active) {
+                    throw new Error('Комната не найдена');
                 }
 
                 await roomRef.child('viewers/' + myPeerId).set({
-                    joined: Date.now()
+                    joined: firebase.database.ServerValue.TIMESTAMP
                 });
 
                 roomRef.child('viewers/' + myPeerId).onDisconnect().remove();
 
-                const offerRef = roomRef.child('offers/' + myPeerId);
-                offerRef.on('value', async (snapshot) => {
-                    const offer = snapshot.val();
-                    if (!offer) return;
-
-                    await handleOffer(offer);
+                roomRef.child('offers/' + myPeerId).on('value', async (snap) => {
+                    const offer = snap.val();
+                    if (offer) {
+                        await handleOffer(offer);
+                    }
                 });
+
+                setTimeout(() => {
+                    if (!document.getElementById('remoteVideo').srcObject) {
+                        document.getElementById('viewerStatus').textContent = '⚠️ Ожидание хоста...';
+                        document.getElementById('viewerStatus').className = 'status warning';
+                    }
+                }, 5000);
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('viewerStatus').textContent = '❌ ' + (err.message || 'Ошибка подключения');
+                document.getElementById('viewerStatus').textContent = '❌ ' + (err.message || 'Ошибка');
                 document.getElementById('viewerStatus').className = 'status error';
                 document.getElementById('joinBtn').disabled = false;
             }
         }
 
         async function handleOffer(offer) {
+            if (peerConnections['host']) {
+                peerConnections['host'].close();
+            }
+
             const pc = new RTCPeerConnection(ICE_SERVERS);
             peerConnections['host'] = pc;
 
-            const candidatesRef = roomRef.child('viewerCandidates/' + myPeerId);
-
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
-                    candidatesRef.push(e.candidate.toJSON());
+                    roomRef.child('viewerCandidates/' + myPeerId).push(e.candidate.toJSON());
                 }
             };
 
@@ -864,7 +819,7 @@
                     document.getElementById('joinForm').classList.add('hidden');
                     document.getElementById('viewerControls').classList.remove('hidden');
                     document.getElementById('viewerVolumeControl').classList.remove('hidden');
-                    document.getElementById('viewerStatus').textContent = '✅ Подключено';
+                    document.getElementById('viewerStatus').textContent = '✅ Подключено!';
                     document.getElementById('viewerStatus').className = 'status connected';
                     startViewerStats(pc);
                 }
@@ -874,16 +829,12 @@
                 if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
                     document.getElementById('viewerStatus').textContent = '⚠️ Соединение потеряно';
                     document.getElementById('viewerStatus').className = 'status warning';
-                } else if (pc.connectionState === 'closed') {
-                    leaveRoom();
                 }
             };
 
-            const hostCandidatesRef = roomRef.child('hostCandidates/' + myPeerId);
-            hostCandidatesRef.on('child_added', async (snapshot) => {
-                const candidate = snapshot.val();
+            roomRef.child('hostCandidates/' + myPeerId).on('child_added', async (snap) => {
                 try {
-                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
                 } catch (e) {}
             });
 
@@ -903,12 +854,12 @@
             peerConnections = {};
 
             if (roomRef && myPeerId) {
+                roomRef.off();
                 await roomRef.child('viewers/' + myPeerId).remove();
                 await roomRef.child('answers/' + myPeerId).remove();
                 await roomRef.child('viewerCandidates/' + myPeerId).remove();
+                roomRef = null;
             }
-
-            roomRef = null;
 
             if (statsInterval) {
                 clearInterval(statsInterval);
@@ -941,16 +892,16 @@
                 const statsEl = document.getElementById('hostStats');
                 const track = localStream?.getVideoTracks()[0];
                 if (track) {
-                    const settings = track.getSettings();
-                    const connected = Object.keys(peerConnections).filter(id => 
-                        peerConnections[id]?.connectionState === 'connected'
+                    const s = track.getSettings();
+                    const connected = Object.values(peerConnections).filter(pc => 
+                        pc.connectionState === 'connected'
                     ).length;
 
                     statsEl.innerHTML = `
-                        <div><span class="quality-dot quality-good"></span> Активна</div>
-                        <div>📐 ${settings.width || '?'}x${settings.height || '?'}</div>
-                        <div>🎬 ${Math.round(settings.frameRate) || '?'} fps</div>
-                        <div>👥 ${connected} подключено</div>
+                        <div><span class="quality-dot quality-good"></span>Активна</div>
+                        <div>📐 ${s.width || '?'}x${s.height || '?'}</div>
+                        <div>🎬 ${Math.round(s.frameRate) || '?'} fps</div>
+                        <div>👥 ${connected} зрителей</div>
                     `;
                 }
             }, 1000);
@@ -964,37 +915,32 @@
 
             statsInterval = setInterval(async () => {
                 const statsEl = document.getElementById('viewerStats');
+                if (!pc) return;
 
                 try {
                     const stats = await pc.getStats();
-                    let currentBytes = 0;
-                    let fps = 0;
-                    let width = 0;
-                    let height = 0;
+                    let bytes = 0, fps = 0, width = 0, height = 0;
 
-                    stats.forEach(report => {
-                        if (report.type === 'inbound-rtp' && report.kind === 'video') {
-                            currentBytes = report.bytesReceived || 0;
-                            fps = report.framesPerSecond || 0;
-                            width = report.frameWidth || 0;
-                            height = report.frameHeight || 0;
+                    stats.forEach(r => {
+                        if (r.type === 'inbound-rtp' && r.kind === 'video') {
+                            bytes = r.bytesReceived || 0;
+                            fps = r.framesPerSecond || 0;
+                            width = r.frameWidth || 0;
+                            height = r.frameHeight || 0;
                         }
                     });
 
                     const now = Date.now();
-                    const timeDiff = (now - lastTime) / 1000;
-                    const bytesDiff = currentBytes - lastBytes;
-                    const bitrate = Math.round((bytesDiff * 8) / timeDiff / 1000);
-
-                    lastBytes = currentBytes;
+                    const bitrate = Math.round((bytes - lastBytes) * 8 / (now - lastTime));
+                    lastBytes = bytes;
                     lastTime = now;
 
-                    let qualityClass = 'quality-good';
-                    if (bitrate < 300) qualityClass = 'quality-bad';
-                    else if (bitrate < 800) qualityClass = 'quality-medium';
+                    let q = 'quality-good';
+                    if (bitrate < 300) q = 'quality-bad';
+                    else if (bitrate < 800) q = 'quality-medium';
 
                     statsEl.innerHTML = `
-                        <div><span class="quality-dot ${qualityClass}"></span> ${pc.connectionState}</div>
+                        <div><span class="quality-dot ${q}"></span>${pc.connectionState}</div>
                         <div>📐 ${width}x${height}</div>
                         <div>🎬 ${Math.round(fps)} fps</div>
                         <div>📊 ${bitrate} kbps</div>
@@ -1003,26 +949,19 @@
             }, 1000);
         }
 
-        function toggleFullscreen(elementId) {
-            const el = document.getElementById(elementId);
+        function toggleFullscreen(id) {
+            const el = document.getElementById(id);
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             } else {
-                el.requestFullscreen().catch(() => {});
+                el.requestFullscreen();
             }
         }
 
         window.addEventListener('beforeunload', () => {
-            if (isHost) {
-                stopStreaming();
-            } else {
-                leaveRoom();
-            }
+            if (isHost) stopStreaming();
+            else leaveRoom();
         });
-
-        setInterval(() => {
-            db.ref('.info/connected').once('value');
-        }, 30000);
     </script>
 </body>
 </html>
