@@ -229,7 +229,7 @@
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            width: 280px;
+            width: 320px;
             text-align: center;
             margin-bottom: 20px;
             letter-spacing: 4px;
@@ -240,6 +240,7 @@
         .join-panel input::placeholder {
             letter-spacing: 2px;
             font-size: 16px;
+            text-transform: none;
         }
 
         .tabs {
@@ -370,6 +371,12 @@
             display: block;
         }
 
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .settings { grid-template-columns: 1fr; }
             .controls { flex-direction: column; }
@@ -450,10 +457,11 @@
         <div id="viewerPanel" class="panel hidden">
             <div class="join-panel" id="joinForm">
                 <h2>🔗 Присоединиться</h2>
-                <p style="color: #888; margin-bottom: 25px;">Введите код комнаты</p>
-                <input type="text" id="roomIdInput" placeholder="XXXXXX" maxlength="6">
+                <p style="color: #888; margin-bottom: 25px;">Введите код или вставьте ссылку</p>
+                <input type="text" id="roomIdInput" placeholder="Код или ссылка">
                 <br>
                 <button class="btn btn-primary" id="joinBtn">Подключиться</button>
+                <p class="hint">Можно вставить полную ссылку — код извлечётся автоматически</p>
             </div>
 
             <div class="status" id="viewerStatus"></div>
@@ -534,11 +542,24 @@
             return result;
         }
 
+        function extractRoomCode(input) {
+            input = input.trim().toUpperCase();
+            
+            if (input.includes('ROOM=')) {
+                const match = input.match(/ROOM=([A-Z0-9]+)/i);
+                if (match) {
+                    return match[1].toUpperCase().substring(0, 6);
+                }
+            }
+            
+            return input.replace(/[^A-Z0-9]/g, '').substring(0, 6);
+        }
+
         db.ref('.info/connected').on('value', (snap) => {
             const statusEl = document.getElementById('connectionStatus');
             if (snap.val() === true) {
                 statusEl.className = 'connection-status online';
-                statusEl.textContent = '🟢 Подключено к серверу';
+                statusEl.textContent = '🟢 Подключено';
                 setTimeout(() => statusEl.style.display = 'none', 2000);
             } else {
                 statusEl.className = 'connection-status offline';
@@ -559,8 +580,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const roomFromUrl = urlParams.get('room');
         if (roomFromUrl) {
+            const code = extractRoomCode(roomFromUrl);
             document.querySelector('[data-mode="viewer"]').click();
-            document.getElementById('roomIdInput').value = roomFromUrl.toUpperCase();
+            document.getElementById('roomIdInput').value = code;
             setTimeout(() => document.getElementById('joinBtn').click(), 500);
         }
 
@@ -570,8 +592,18 @@
         document.getElementById('leaveBtn').addEventListener('click', leaveRoom);
         document.getElementById('copyLinkBtn').addEventListener('click', copyLink);
 
+        document.getElementById('roomIdInput').addEventListener('paste', (e) => {
+            setTimeout(() => {
+                const input = document.getElementById('roomIdInput');
+                input.value = extractRoomCode(input.value);
+            }, 0);
+        });
+
         document.getElementById('roomIdInput').addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const val = e.target.value;
+            if (!val.includes('http') && !val.includes('room=')) {
+                e.target.value = val.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
+            }
         });
 
         document.getElementById('roomIdInput').addEventListener('keypress', (e) => {
@@ -748,9 +780,12 @@
         }
 
         async function joinRoom() {
-            const inputId = document.getElementById('roomIdInput').value.trim().toUpperCase();
+            let inputId = document.getElementById('roomIdInput').value;
+            inputId = extractRoomCode(inputId);
+            document.getElementById('roomIdInput').value = inputId;
+
             if (inputId.length < 4) {
-                document.getElementById('viewerStatus').textContent = '❌ Введите код комнаты';
+                document.getElementById('viewerStatus').textContent = '❌ Введите код (минимум 4 символа)';
                 document.getElementById('viewerStatus').className = 'status error';
                 return;
             }
@@ -766,7 +801,7 @@
 
                 const roomSnap = await roomRef.once('value');
                 if (!roomSnap.exists() || !roomSnap.val().active) {
-                    throw new Error('Комната не найдена');
+                    throw new Error('Комната не найдена или неактивна');
                 }
 
                 await roomRef.child('viewers/' + myPeerId).set({
