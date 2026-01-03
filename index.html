@@ -307,7 +307,7 @@
             <div class="video-container hidden" id="localContainer">
                 <div class="stats" id="hostStats"></div>
                 <video id="localVideo" autoplay muted playsinline></video>
-                <button class="fullscreen-btn" onclick="goFS('localContainer')">⛶</button>
+                <button class="fullscreen-btn" id="localFS">⛶</button>
             </div>
         </div>
 
@@ -324,7 +324,7 @@
             <div class="video-container hidden" id="remoteContainer">
                 <div class="stats" id="viewerStats"></div>
                 <video id="remoteVideo" autoplay playsinline></video>
-                <button class="fullscreen-btn" onclick="goFS('remoteContainer')">⛶</button>
+                <button class="fullscreen-btn" id="remoteFS">⛶</button>
             </div>
 
             <div class="volume hidden" id="volumeBox">
@@ -340,413 +340,454 @@
     </div>
 
 <script>
-const SUPABASE_URL = 'https://tdjlbepgzxncewgfmufy.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkamxiZXBnenhuY2V3Z2ZtdWZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0MzQyNDUsImV4cCI6MjA4MzAxMDI0NX0.KsJocAlMVkUY20yyq0nngTWkASVTjUvky16Lnpuhtrc';
+(function() {
+    const SUPABASE_URL = 'https://tdjlbepgzxncewgfmufy.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkamxiZXBnenhuY2V3Z2ZtdWZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0MzQyNDUsImV4cCI6MjA4MzAxMDI0NX0.KsJocAlMVkUY20yyq0nngTWkASVTjUvky16Lnpuhtrc';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const ICE = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-    ]
-};
-
-let stream = null;
-let pcs = {};
-let room = null;
-let me = null;
-let host = false;
-let poll = null;
-let lastSigId = 0;
-let statsInt = null;
-
-const genId = n => {
-    const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let r = '';
-    for (let i = 0; i < n; i++) r += c[Math.floor(Math.random() * c.length)];
-    return r;
-};
-
-const getCode = s => {
-    s = s.trim().toUpperCase();
-    if (s.includes('ROOM=')) {
-        const m = s.match(/ROOM=([A-Z0-9]+)/i);
-        if (m) return m[1].substring(0, 6);
-    }
-    return s.replace(/[^A-Z0-9]/g, '').substring(0, 6);
-};
-
-async function checkServer() {
-    const el = document.getElementById('serverStatus');
-    try {
-        const { error } = await supabase.from('rooms').select('id').limit(1);
-        if (error) throw error;
-        el.className = 'server-status ok';
-        el.textContent = '🟢 Сервер OK';
-        setTimeout(() => el.style.display = 'none', 2000);
-    } catch (e) {
-        el.className = 'server-status err';
-        el.textContent = '🔴 Ошибка сервера: ' + e.message;
-    }
-}
-checkServer();
-
-document.querySelectorAll('.tab').forEach(t => {
-    t.onclick = () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        const m = t.dataset.mode;
-        document.getElementById('hostPanel').classList.toggle('hidden', m !== 'host');
-        document.getElementById('viewerPanel').classList.toggle('hidden', m !== 'viewer');
+    const ICE = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+            { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+            { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+        ]
     };
-});
 
-const params = new URLSearchParams(location.search);
-if (params.get('room')) {
-    document.querySelector('[data-mode="viewer"]').click();
-    document.getElementById('codeInput').value = getCode(params.get('room'));
-    setTimeout(() => document.getElementById('joinBtn').click(), 500);
-}
+    let stream = null;
+    let pcs = {};
+    let room = null;
+    let me = null;
+    let isHost = false;
+    let pollInterval = null;
+    let lastSigId = 0;
+    let statsInterval = null;
 
-document.getElementById('startBtn').onclick = startHost;
-document.getElementById('stopBtn').onclick = stopHost;
-document.getElementById('joinBtn').onclick = joinViewer;
-document.getElementById('leaveBtn').onclick = leaveViewer;
-document.getElementById('copyBtn').onclick = () => {
-    navigator.clipboard.writeText(document.getElementById('shareUrl').value);
-    document.getElementById('copyBtn').textContent = '✅';
-    setTimeout(() => document.getElementById('copyBtn').textContent = '📋', 1500);
-};
-
-document.getElementById('codeInput').oninput = e => {
-    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
-};
-document.getElementById('codeInput').onpaste = e => {
-    setTimeout(() => {
-        const inp = document.getElementById('codeInput');
-        inp.value = getCode(inp.value);
-    }, 0);
-};
-document.getElementById('codeInput').onkeypress = e => {
-    if (e.key === 'Enter') document.getElementById('joinBtn').click();
-};
-document.getElementById('vol').oninput = e => {
-    document.getElementById('remoteVideo').volume = e.target.value / 100;
-    document.getElementById('volVal').textContent = e.target.value + '%';
-};
-
-async function startHost() {
-    try {
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('hostStatus').innerHTML = '<div class="loader"></div>';
-
-        const q = +document.getElementById('quality').value;
-        const f = +document.getElementById('fps').value;
-        const a = document.getElementById('audio').checked;
-
-        stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { width: { ideal: q * 16 / 9 }, height: { ideal: q }, frameRate: { ideal: f } },
-            audio: a
-        });
-
-        document.getElementById('localVideo').srcObject = stream;
-        document.getElementById('localContainer').classList.remove('hidden');
-
-        room = genId(6);
-        me = genId(12);
-        host = true;
-
-        await supabase.from('rooms').insert({ id: room, host_id: me });
-
-        startPoll();
-
-        const url = location.origin + location.pathname + '?room=' + room;
-        document.getElementById('shareUrl').value = url;
-        document.getElementById('roomCode').textContent = room;
-        document.getElementById('hostInfo').classList.remove('hidden');
-        document.getElementById('startBtn').classList.add('hidden');
-        document.getElementById('stopBtn').classList.remove('hidden');
-        document.getElementById('hostStatus').textContent = '✅ Трансляция активна';
-        document.getElementById('hostStatus').className = 'status connected';
-
-        hostStatsLoop();
-        stream.getVideoTracks()[0].onended = stopHost;
-
-    } catch (e) {
-        document.getElementById('hostStatus').textContent = '❌ ' + e.message;
-        document.getElementById('hostStatus').className = 'status error';
-        document.getElementById('startBtn').disabled = false;
-    }
-}
-
-async function stopHost() {
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    Object.values(pcs).forEach(pc => pc.close());
-    pcs = {};
-    if (poll) { clearInterval(poll); poll = null; }
-    if (statsInt) { clearInterval(statsInt); statsInt = null; }
-    if (room) {
-        await supabase.from('signals').delete().eq('room_id', room);
-        await supabase.from('rooms').delete().eq('id', room);
-    }
-    document.getElementById('localVideo').srcObject = null;
-    document.getElementById('localContainer').classList.add('hidden');
-    document.getElementById('hostInfo').classList.add('hidden');
-    document.getElementById('stopBtn').classList.add('hidden');
-    document.getElementById('startBtn').classList.remove('hidden');
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('hostStatus').textContent = 'Остановлено';
-    document.getElementById('hostStatus').className = 'status';
-    document.getElementById('hostStats').innerHTML = '';
-    host = false;
-    room = null;
-    lastSigId = 0;
-}
-
-async function joinViewer() {
-    let code = getCode(document.getElementById('codeInput').value);
-    document.getElementById('codeInput').value = code;
-    if (code.length < 4) {
-        document.getElementById('viewerStatus').textContent = '❌ Введите код';
-        document.getElementById('viewerStatus').className = 'status error';
-        return;
+    function genId(n) {
+        const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let r = '';
+        for (let i = 0; i < n; i++) r += c[Math.floor(Math.random() * c.length)];
+        return r;
     }
 
-    try {
-        document.getElementById('joinBtn').disabled = true;
-        document.getElementById('viewerStatus').innerHTML = '<div class="loader"></div>';
+    function getCode(s) {
+        s = s.trim().toUpperCase();
+        if (s.includes('ROOM=')) {
+            const m = s.match(/ROOM=([A-Z0-9]+)/i);
+            if (m) return m[1].substring(0, 6);
+        }
+        return s.replace(/[^A-Z0-9]/g, '').substring(0, 6);
+    }
 
-        const { data: r } = await supabase.from('rooms').select('*').eq('id', code).single();
-        if (!r) throw new Error('Комната не найдена');
+    async function checkServer() {
+        const el = document.getElementById('serverStatus');
+        try {
+            const { error } = await db.from('rooms').select('id').limit(1);
+            if (error) throw error;
+            el.className = 'server-status ok';
+            el.textContent = '🟢 Сервер OK';
+            setTimeout(() => el.style.display = 'none', 2000);
+        } catch (e) {
+            el.className = 'server-status err';
+            el.textContent = '🔴 Ошибка: ' + e.message;
+        }
+    }
 
-        room = code;
-        me = genId(12);
-        host = false;
+    checkServer();
 
-        startPoll();
+    document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            const m = t.dataset.mode;
+            document.getElementById('hostPanel').classList.toggle('hidden', m !== 'host');
+            document.getElementById('viewerPanel').classList.toggle('hidden', m !== 'viewer');
+        };
+    });
 
-        await supabase.from('signals').insert({
-            room_id: room,
-            sender_id: me,
-            receiver_id: r.host_id,
-            type: 'join',
-            data: {}
-        });
+    const params = new URLSearchParams(location.search);
+    if (params.get('room')) {
+        document.querySelector('[data-mode="viewer"]').click();
+        document.getElementById('codeInput').value = getCode(params.get('room'));
+        setTimeout(() => document.getElementById('joinBtn').click(), 500);
+    }
 
+    document.getElementById('startBtn').onclick = startHost;
+    document.getElementById('stopBtn').onclick = stopHost;
+    document.getElementById('joinBtn').onclick = joinViewer;
+    document.getElementById('leaveBtn').onclick = leaveViewer;
+
+    document.getElementById('copyBtn').onclick = () => {
+        navigator.clipboard.writeText(document.getElementById('shareUrl').value);
+        document.getElementById('copyBtn').textContent = '✅';
+        setTimeout(() => document.getElementById('copyBtn').textContent = '📋', 1500);
+    };
+
+    document.getElementById('codeInput').oninput = e => {
+        e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
+    };
+
+    document.getElementById('codeInput').onpaste = e => {
         setTimeout(() => {
-            if (!document.getElementById('remoteVideo').srcObject) {
-                document.getElementById('viewerStatus').textContent = '⏳ Ожидание...';
+            const inp = document.getElementById('codeInput');
+            inp.value = getCode(inp.value);
+        }, 0);
+    };
+
+    document.getElementById('codeInput').onkeypress = e => {
+        if (e.key === 'Enter') document.getElementById('joinBtn').click();
+    };
+
+    document.getElementById('vol').oninput = e => {
+        document.getElementById('remoteVideo').volume = e.target.value / 100;
+        document.getElementById('volVal').textContent = e.target.value + '%';
+    };
+
+    document.getElementById('localFS').onclick = () => {
+        const el = document.getElementById('localContainer');
+        if (document.fullscreenElement) document.exitFullscreen();
+        else el.requestFullscreen();
+    };
+
+    document.getElementById('remoteFS').onclick = () => {
+        const el = document.getElementById('remoteContainer');
+        if (document.fullscreenElement) document.exitFullscreen();
+        else el.requestFullscreen();
+    };
+
+    async function startHost() {
+        try {
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('hostStatus').innerHTML = '<div class="loader"></div>';
+
+            const q = +document.getElementById('quality').value;
+            const f = +document.getElementById('fps').value;
+            const a = document.getElementById('audio').checked;
+
+            stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { width: { ideal: q * 16 / 9 }, height: { ideal: q }, frameRate: { ideal: f } },
+                audio: a
+            });
+
+            document.getElementById('localVideo').srcObject = stream;
+            document.getElementById('localContainer').classList.remove('hidden');
+
+            room = genId(6);
+            me = genId(12);
+            isHost = true;
+
+            await db.from('rooms').insert({ id: room, host_id: me });
+
+            startPolling();
+
+            const url = location.origin + location.pathname + '?room=' + room;
+            document.getElementById('shareUrl').value = url;
+            document.getElementById('roomCode').textContent = room;
+            document.getElementById('hostInfo').classList.remove('hidden');
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('stopBtn').classList.remove('hidden');
+            document.getElementById('hostStatus').textContent = '✅ Трансляция активна';
+            document.getElementById('hostStatus').className = 'status connected';
+
+            startHostStats();
+            stream.getVideoTracks()[0].onended = stopHost;
+
+        } catch (e) {
+            document.getElementById('hostStatus').textContent = '❌ ' + e.message;
+            document.getElementById('hostStatus').className = 'status error';
+            document.getElementById('startBtn').disabled = false;
+        }
+    }
+
+    async function stopHost() {
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            stream = null;
+        }
+        Object.values(pcs).forEach(pc => pc.close());
+        pcs = {};
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        if (statsInterval) {
+            clearInterval(statsInterval);
+            statsInterval = null;
+        }
+        if (room) {
+            await db.from('signals').delete().eq('room_id', room);
+            await db.from('rooms').delete().eq('id', room);
+        }
+        document.getElementById('localVideo').srcObject = null;
+        document.getElementById('localContainer').classList.add('hidden');
+        document.getElementById('hostInfo').classList.add('hidden');
+        document.getElementById('stopBtn').classList.add('hidden');
+        document.getElementById('startBtn').classList.remove('hidden');
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('hostStatus').textContent = 'Остановлено';
+        document.getElementById('hostStatus').className = 'status';
+        document.getElementById('hostStats').innerHTML = '';
+        isHost = false;
+        room = null;
+        lastSigId = 0;
+    }
+
+    async function joinViewer() {
+        let code = getCode(document.getElementById('codeInput').value);
+        document.getElementById('codeInput').value = code;
+
+        if (code.length < 4) {
+            document.getElementById('viewerStatus').textContent = '❌ Введите код';
+            document.getElementById('viewerStatus').className = 'status error';
+            return;
+        }
+
+        try {
+            document.getElementById('joinBtn').disabled = true;
+            document.getElementById('viewerStatus').innerHTML = '<div class="loader"></div>';
+
+            const { data: r, error } = await db.from('rooms').select('*').eq('id', code).single();
+            if (error || !r) throw new Error('Комната не найдена');
+
+            room = code;
+            me = genId(12);
+            isHost = false;
+
+            startPolling();
+
+            await db.from('signals').insert({
+                room_id: room,
+                sender_id: me,
+                receiver_id: r.host_id,
+                type: 'join',
+                data: {}
+            });
+
+            setTimeout(() => {
+                if (!document.getElementById('remoteVideo').srcObject) {
+                    document.getElementById('viewerStatus').textContent = '⏳ Ожидание хоста...';
+                    document.getElementById('viewerStatus').className = 'status warning';
+                }
+            }, 5000);
+
+        } catch (e) {
+            document.getElementById('viewerStatus').textContent = '❌ ' + e.message;
+            document.getElementById('viewerStatus').className = 'status error';
+            document.getElementById('joinBtn').disabled = false;
+        }
+    }
+
+    async function leaveViewer() {
+        Object.values(pcs).forEach(pc => pc.close());
+        pcs = {};
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        if (statsInterval) {
+            clearInterval(statsInterval);
+            statsInterval = null;
+        }
+        document.getElementById('remoteVideo').srcObject = null;
+        document.getElementById('remoteContainer').classList.add('hidden');
+        document.getElementById('volumeBox').classList.add('hidden');
+        document.getElementById('joinForm').classList.remove('hidden');
+        document.getElementById('leaveBox').classList.add('hidden');
+        document.getElementById('joinBtn').disabled = false;
+        document.getElementById('viewerStatus').textContent = '';
+        document.getElementById('viewerStats').innerHTML = '';
+        room = null;
+        lastSigId = 0;
+    }
+
+    function startPolling() {
+        pollInterval = setInterval(async () => {
+            try {
+                const { data } = await db
+                    .from('signals')
+                    .select('*')
+                    .eq('room_id', room)
+                    .gt('id', lastSigId)
+                    .order('id');
+
+                if (data && data.length) {
+                    for (const sig of data) {
+                        lastSigId = Math.max(lastSigId, sig.id);
+                        await handleSignal(sig);
+                    }
+                }
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }, 500);
+    }
+
+    async function handleSignal(sig) {
+        if (sig.sender_id === me) return;
+        if (sig.receiver_id && sig.receiver_id !== me) return;
+
+        const d = sig.data;
+
+        if (isHost) {
+            if (sig.type === 'join') {
+                await makeOffer(sig.sender_id);
+            } else if (sig.type === 'answer') {
+                const pc = pcs[sig.sender_id];
+                if (pc && pc.signalingState !== 'stable') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(d));
+                }
+            } else if (sig.type === 'ice') {
+                const pc = pcs[sig.sender_id];
+                if (pc) {
+                    try { await pc.addIceCandidate(new RTCIceCandidate(d)); } catch(e) {}
+                }
+            }
+        } else {
+            if (sig.type === 'offer') {
+                await handleOffer(sig.sender_id, d);
+            } else if (sig.type === 'ice') {
+                const pc = pcs['host'];
+                if (pc) {
+                    try { await pc.addIceCandidate(new RTCIceCandidate(d)); } catch(e) {}
+                }
+            }
+        }
+    }
+
+    async function makeOffer(viewerId) {
+        const pc = new RTCPeerConnection(ICE);
+        pcs[viewerId] = pc;
+
+        stream.getTracks().forEach(t => pc.addTrack(t, stream));
+
+        pc.onicecandidate = e => {
+            if (e.candidate) {
+                sendSignal('ice', e.candidate.toJSON(), viewerId);
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            updateViewers();
+            if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                pc.close();
+                delete pcs[viewerId];
+                updateViewers();
+            }
+        };
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await sendSignal('offer', { type: offer.type, sdp: offer.sdp }, viewerId);
+        updateViewers();
+    }
+
+    async function handleOffer(hostId, offer) {
+        const pc = new RTCPeerConnection(ICE);
+        pcs['host'] = pc;
+
+        pc.onicecandidate = e => {
+            if (e.candidate) {
+                sendSignal('ice', e.candidate.toJSON(), hostId);
+            }
+        };
+
+        pc.ontrack = e => {
+            const v = document.getElementById('remoteVideo');
+            if (v.srcObject !== e.streams[0]) {
+                v.srcObject = e.streams[0];
+                document.getElementById('remoteContainer').classList.remove('hidden');
+                document.getElementById('joinForm').classList.add('hidden');
+                document.getElementById('leaveBox').classList.remove('hidden');
+                document.getElementById('volumeBox').classList.remove('hidden');
+                document.getElementById('viewerStatus').textContent = '✅ Подключено!';
+                document.getElementById('viewerStatus').className = 'status connected';
+                startViewerStats(pc);
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                document.getElementById('viewerStatus').textContent = '⚠️ Соединение потеряно';
                 document.getElementById('viewerStatus').className = 'status warning';
             }
-        }, 5000);
+        };
 
-    } catch (e) {
-        document.getElementById('viewerStatus').textContent = '❌ ' + e.message;
-        document.getElementById('viewerStatus').className = 'status error';
-        document.getElementById('joinBtn').disabled = false;
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await sendSignal('answer', { type: answer.type, sdp: answer.sdp }, hostId);
     }
-}
 
-async function leaveViewer() {
-    Object.values(pcs).forEach(pc => pc.close());
-    pcs = {};
-    if (poll) { clearInterval(poll); poll = null; }
-    if (statsInt) { clearInterval(statsInt); statsInt = null; }
-    document.getElementById('remoteVideo').srcObject = null;
-    document.getElementById('remoteContainer').classList.add('hidden');
-    document.getElementById('volumeBox').classList.add('hidden');
-    document.getElementById('joinForm').classList.remove('hidden');
-    document.getElementById('leaveBox').classList.add('hidden');
-    document.getElementById('joinBtn').disabled = false;
-    document.getElementById('viewerStatus').textContent = '';
-    document.getElementById('viewerStats').innerHTML = '';
-    room = null;
-    lastSigId = 0;
-}
-
-function startPoll() {
-    poll = setInterval(async () => {
-        try {
-            const { data } = await supabase
-                .from('signals')
-                .select('*')
-                .eq('room_id', room)
-                .gt('id', lastSigId)
-                .order('id');
-
-            if (data && data.length) {
-                for (const sig of data) {
-                    lastSigId = Math.max(lastSigId, sig.id);
-                    await handleSignal(sig);
-                }
-            }
-        } catch (e) {}
-    }, 500);
-}
-
-async function handleSignal(sig) {
-    if (sig.sender_id === me) return;
-    if (sig.receiver_id && sig.receiver_id !== me) return;
-
-    const d = sig.data;
-
-    if (host) {
-        if (sig.type === 'join') {
-            await makeOffer(sig.sender_id);
-        } else if (sig.type === 'answer') {
-            const pc = pcs[sig.sender_id];
-            if (pc && pc.signalingState !== 'stable') {
-                await pc.setRemoteDescription(new RTCSessionDescription(d));
-            }
-        } else if (sig.type === 'ice') {
-            const pc = pcs[sig.sender_id];
-            if (pc) try { await pc.addIceCandidate(new RTCIceCandidate(d)); } catch(e) {}
-        }
-    } else {
-        if (sig.type === 'offer') {
-            await handleOffer(sig.sender_id, d);
-        } else if (sig.type === 'ice') {
-            const pc = pcs['host'];
-            if (pc) try { await pc.addIceCandidate(new RTCIceCandidate(d)); } catch(e) {}
-        }
+    async function sendSignal(type, data, to) {
+        await db.from('signals').insert({
+            room_id: room,
+            sender_id: me,
+            receiver_id: to || null,
+            type: type,
+            data: data
+        });
     }
-}
 
-async function makeOffer(viewerId) {
-    const pc = new RTCPeerConnection(ICE);
-    pcs[viewerId] = pc;
+    function updateViewers() {
+        const n = Object.values(pcs).filter(pc =>
+            pc.connectionState === 'connected' || pc.connectionState === 'connecting'
+        ).length;
+        document.getElementById('viewers').textContent = '👥 ' + n;
+    }
 
-    stream.getTracks().forEach(t => pc.addTrack(t, stream));
+    function startHostStats() {
+        if (statsInterval) clearInterval(statsInterval);
+        statsInterval = setInterval(() => {
+            const el = document.getElementById('hostStats');
+            const t = stream?.getVideoTracks()[0];
+            if (t) {
+                const s = t.getSettings();
+                const n = Object.values(pcs).filter(p => p.connectionState === 'connected').length;
+                el.innerHTML = `<div><span class="dot dot-good"></span>Live</div>
+                    <div>📐 ${s.width || '?'}x${s.height || '?'}</div>
+                    <div>🎬 ${Math.round(s.frameRate) || '?'} fps</div>
+                    <div>👥 ${n}</div>`;
+            }
+        }, 1000);
+    }
 
-    pc.onicecandidate = e => {
-        if (e.candidate) send('ice', e.candidate.toJSON(), viewerId);
+    function startViewerStats(pc) {
+        if (statsInterval) clearInterval(statsInterval);
+        let lastB = 0, lastT = Date.now();
+        statsInterval = setInterval(async () => {
+            const el = document.getElementById('viewerStats');
+            try {
+                const stats = await pc.getStats();
+                let b = 0, fps = 0, w = 0, h = 0;
+                stats.forEach(r => {
+                    if (r.type === 'inbound-rtp' && r.kind === 'video') {
+                        b = r.bytesReceived || 0;
+                        fps = r.framesPerSecond || 0;
+                        w = r.frameWidth || 0;
+                        h = r.frameHeight || 0;
+                    }
+                });
+                const now = Date.now();
+                const kbps = Math.round((b - lastB) * 8 / (now - lastT));
+                lastB = b;
+                lastT = now;
+                const dot = kbps < 300 ? 'dot-bad' : kbps < 800 ? 'dot-mid' : 'dot-good';
+                el.innerHTML = `<div><span class="dot ${dot}"></span>${pc.connectionState}</div>
+                    <div>📐 ${w}x${h}</div>
+                    <div>🎬 ${Math.round(fps)} fps</div>
+                    <div>📊 ${kbps} kbps</div>`;
+            } catch(e) {}
+        }, 1000);
+    }
+
+    window.onbeforeunload = () => {
+        if (isHost) stopHost();
+        else leaveViewer();
     };
 
-    pc.onconnectionstatechange = () => {
-        updateViewers();
-        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            pc.close();
-            delete pcs[viewerId];
-            updateViewers();
-        }
-    };
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await send('offer', { type: offer.type, sdp: offer.sdp }, viewerId);
-    updateViewers();
-}
-
-async function handleOffer(hostId, offer) {
-    const pc = new RTCPeerConnection(ICE);
-    pcs['host'] = pc;
-
-    pc.onicecandidate = e => {
-        if (e.candidate) send('ice', e.candidate.toJSON(), hostId);
-    };
-
-    pc.ontrack = e => {
-        const v = document.getElementById('remoteVideo');
-        if (v.srcObject !== e.streams[0]) {
-            v.srcObject = e.streams[0];
-            document.getElementById('remoteContainer').classList.remove('hidden');
-            document.getElementById('joinForm').classList.add('hidden');
-            document.getElementById('leaveBox').classList.remove('hidden');
-            document.getElementById('volumeBox').classList.remove('hidden');
-            document.getElementById('viewerStatus').textContent = '✅ Подключено!';
-            document.getElementById('viewerStatus').className = 'status connected';
-            viewerStatsLoop(pc);
-        }
-    };
-
-    pc.onconnectionstatechange = () => {
-        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            document.getElementById('viewerStatus').textContent = '⚠️ Потеряно';
-            document.getElementById('viewerStatus').className = 'status warning';
-        }
-    };
-
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    await send('answer', { type: answer.type, sdp: answer.sdp }, hostId);
-}
-
-async function send(type, data, to = null) {
-    await supabase.from('signals').insert({
-        room_id: room,
-        sender_id: me,
-        receiver_id: to,
-        type: type,
-        data: data
-    });
-}
-
-function updateViewers() {
-    const n = Object.values(pcs).filter(pc => 
-        pc.connectionState === 'connected' || pc.connectionState === 'connecting'
-    ).length;
-    document.getElementById('viewers').textContent = '👥 ' + n;
-}
-
-function hostStatsLoop() {
-    if (statsInt) clearInterval(statsInt);
-    statsInt = setInterval(() => {
-        const el = document.getElementById('hostStats');
-        const t = stream?.getVideoTracks()[0];
-        if (t) {
-            const s = t.getSettings();
-            const n = Object.values(pcs).filter(p => p.connectionState === 'connected').length;
-            el.innerHTML = `<div><span class="dot dot-good"></span>Live</div>
-                <div>📐 ${s.width}x${s.height}</div>
-                <div>🎬 ${Math.round(s.frameRate)} fps</div>
-                <div>👥 ${n}</div>`;
-        }
-    }, 1000);
-}
-
-function viewerStatsLoop(pc) {
-    if (statsInt) clearInterval(statsInt);
-    let lastB = 0, lastT = Date.now();
-    statsInt = setInterval(async () => {
-        const el = document.getElementById('viewerStats');
-        try {
-            const stats = await pc.getStats();
-            let b = 0, fps = 0, w = 0, h = 0;
-            stats.forEach(r => {
-                if (r.type === 'inbound-rtp' && r.kind === 'video') {
-                    b = r.bytesReceived || 0;
-                    fps = r.framesPerSecond || 0;
-                    w = r.frameWidth || 0;
-                    h = r.frameHeight || 0;
-                }
-            });
-            const now = Date.now();
-            const kbps = Math.round((b - lastB) * 8 / (now - lastT));
-            lastB = b; lastT = now;
-            const dot = kbps < 300 ? 'dot-bad' : kbps < 800 ? 'dot-mid' : 'dot-good';
-            el.innerHTML = `<div><span class="dot ${dot}"></span>${pc.connectionState}</div>
-                <div>📐 ${w}x${h}</div>
-                <div>🎬 ${Math.round(fps)} fps</div>
-                <div>📊 ${kbps} kbps</div>`;
-        } catch(e) {}
-    }, 1000);
-}
-
-function goFS(id) {
-    const el = document.getElementById(id);
-    if (document.fullscreenElement) document.exitFullscreen();
-    else el.requestFullscreen();
-}
-
-window.onbeforeunload = () => {
-    if (host) stopHost();
-    else leaveViewer();
-};
+})();
 </script>
 </body>
 </html>
